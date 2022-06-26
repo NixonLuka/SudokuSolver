@@ -26,4 +26,6 @@ class Board{
         Board(std::vector<int>);    
         bool validTile(int, int);
         void printBoard();
+        void printTile(int, int);
+        static bool solveBoard(Board, int, int, Board);
 };
