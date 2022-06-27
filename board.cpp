@@ -1,7 +1,9 @@
 #include <iostream>
 #include <algorithm>
 #include <sstream>
+#include <chrono>
 #include "board.hpp"
+
 
 Tile::Tile(int val){
     this->value = val;
@@ -20,14 +22,8 @@ bool Tile::isConcrete(){
 int Tile::getValue(){
     return value;
 }
-bool Tile::setValue(int val){
-    auto iter = std::find(begin(available), end(available), val);
-    if (iter != available.end()){ //is available
-        available.erase(iter,iter+1);
-        value = val;
-        return true;
-    } 
-    return false;
+void Tile::setValue(int val){
+    value = val;
 }
 
 bool Tile::operator==(Tile& tile){
@@ -64,8 +60,9 @@ bool Board::checkRow(int row, int column){
     for (int i = 0; i < 9; i++){
         if(i == column)
             continue;
-        if (placedTile == tiles[row][i])
+        if (placedTile == tiles[row][i]){
             return false;
+        }
     }
     return true;
 }
@@ -75,8 +72,10 @@ bool Board::checkColumn(int row, int column){
     for(int i = 0; i < 9; i++){
         if (i == row)
             continue;
-        if (placedTile == tiles[i][column])
+        if (placedTile == tiles[i][column]){
             return false;
+        }
+
     }
     return true;
 }
@@ -92,8 +91,9 @@ bool Board::checkSquare(int row, int column){
         for (int j = lowerColumnBound; j < lowerColumnBound + 2; j++){
             if (j == column)
                 continue;
-            if(placedTile == tiles[i][j])
+            if(placedTile == tiles[i][j]){
                 return false;
+            }
         }
     }
     return true;
@@ -129,6 +129,55 @@ void Board::printTile(int row, int column){
     std::cout << tiles[row][column].getValue() << std::endl;
 }
 
+void Board::solve(){
+    std::cout << "Solving the following board:" << std::endl;
+    this->printBoard();
+    auto start = std::chrono::high_resolution_clock::now();
+    if(this->solveBoard(0,0)){
+        auto stop = std::chrono::high_resolution_clock::now();
+        std::cout << "Solution:" << std::endl;
+        this->printBoard();
+        std::cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count() << " microseconds";
+    } else {
+        std::cout << "Board is unsolvable" << std::endl;
+    }
+}
+
+/**
+ * @brief Recursive call to place every tile and validate the board, eventually solving the sudoku puzzle
+ * 
+ * @param rowIndex 
+ * @param columnIndex 
+ * @return true 
+ * @return false 
+ */
+bool Board::solveBoard(int rowIndex, int columnIndex){
+    if (rowIndex == 9){//gone through and validated all rows, board is finished
+        return true;
+    }
+    if (columnIndex == 9){ //end of row
+        return solveBoard(rowIndex+1, 0);
+    }
+    Tile* current = &tiles[rowIndex][columnIndex];
+    if (current->isConcrete()){ //tile is unchangable 
+        return solveBoard(rowIndex,columnIndex+1);
+    }
+    for (int i = 1; i < 10; i++){
+        current->setValue(i);
+        if(validTile(rowIndex,columnIndex)){
+            if(solveBoard(rowIndex,columnIndex+1)){
+                return true;
+            } else {
+                continue;
+            }
+        } else {
+            continue;
+        }
+    }
+    current->setValue(0);
+    return false;
+}
+
 int main(int argc, char* argv[]){
     int input;
     std::vector<int> board;
@@ -137,7 +186,24 @@ int main(int argc, char* argv[]){
         board.push_back(input);   
     }*/
     std::stringstream in;
-    in <<  "1 8 4 9 6 3 7 2 5\
+    in <<  "1 0 4 9 0 3 0 2 0\
+            0 6 2 0 4 0 0 1 0\
+            3 0 0 0 1 2 0 6 0\
+            0 3 0 6 0 0 0 0 0\
+            7 0 6 0 8 0 0 0 3\
+            0 1 8 0 3 0 0 0 0\
+            0 0 1 0 0 0 5 0 2\
+            6 0 3 0 0 0 4 0 1\
+            0 0 0 4 0 1 0 3 6";
+    while(in >> input){
+        board.push_back(input);
+    }
+    
+    Board testBoard(board);
+    testBoard.solve();
+}
+/*  
+        "   1 8 4 9 6 3 7 2 5\
             5 6 2 7 4 8 3 1 9\
             3 9 7 5 1 2 8 6 4\
             2 3 9 6 5 7 1 4 8\
@@ -146,11 +212,4 @@ int main(int argc, char* argv[]){
             9 4 1 3 7 6 5 8 2\
             6 2 3 8 9 5 4 7 1\
             8 7 5 4 2 1 9 3 6";
-    while(in >> input){
-        board.push_back(input);
-    }
-    
-    Board testBoard(board);
-    std::cout << testBoard.validTile(3,3) << std::endl;
-    testBoard.printBoard();
-}
+*/

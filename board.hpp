@@ -13,7 +13,7 @@ class Tile{
         bool operator==(Tile&);
         bool isConcrete();
         int getValue();
-        bool setValue(int);
+        void setValue(int);
 };
 
 class Board{
@@ -27,5 +27,6 @@ class Board{
         bool validTile(int, int);
         void printBoard();
         void printTile(int, int);
-        static bool solveBoard(Board, int, int, Board);
+        bool solveBoard(int, int);
+        void solve();
 };
